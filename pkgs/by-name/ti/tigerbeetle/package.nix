@@ -10,14 +10,14 @@ let
   platform =
     if stdenvNoCC.hostPlatform.isDarwin then "universal-macos" else stdenvNoCC.hostPlatform.system;
   hash = builtins.getAttr platform {
-    "universal-macos" = "sha256-VtKM+Fw1yy0KYvbtxerYykEbYv1hCc81ckfETH36vCU=";
-    "x86_64-linux" = "sha256-LtnLLWSOUtnp27swwCrRiA3NIKqrOD2MZylXKbLm2fw=";
-    "aarch64-linux" = "sha256-tmlizjB8BWtbQd75RoYvIsRxqEuj1V7Fx9LgArvphm4=";
+    "universal-macos" = "sha256-SS2PPniO3zSfDyCy3aM41Jq8HlOuIQj4hFUx7tUlOzM=";
+    "x86_64-linux" = "sha256-sE0P8mLvz8V45z2qGP4cAlzow58lc483+dDIbOwvC0Y=";
+    "aarch64-linux" = "sha256-W8AWgG86/MFM/xpxEIjkjeVWsCN0Mjme60geusFwMRo=";
   };
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "tigerbeetle";
-  version = "0.16.2";
+  version = "0.16.8";
 
   src = fetchzip {
     url = "https://github.com/tigerbeetle/tigerbeetle/releases/download/${finalAttrs.version}/tigerbeetle-${platform}.zip";
@@ -42,7 +42,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       package = tigerbeetle;
       command = "tigerbeetle version";
     };
-    updateScript = nix-update-script { };
+    updateScript = ./update.sh;
   };
 
   meta = {

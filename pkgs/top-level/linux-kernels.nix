@@ -26,6 +26,10 @@ let
     linux = kernel;
   };
 
+  markBroken = drv: drv.overrideAttrs ({ meta ? {}, ... }: {
+    meta = meta // { broken = true; };
+  });
+
   # Hardened Linux
   hardenedKernelFor = kernel': overrides:
     let
@@ -259,10 +263,10 @@ in {
 
     linux_hardened = hardenedKernelFor packageAliases.linux_default.kernel { };
 
-    linux_5_4_hardened = hardenedKernelFor kernels.linux_5_4 {
+    linux_5_4_hardened = markBroken (hardenedKernelFor kernels.linux_5_4 {
       stdenv = gcc10Stdenv;
       buildPackages = buildPackages // { stdenv = buildPackages.gcc10Stdenv; };
-    };
+    });
     linux_5_10_hardened = hardenedKernelFor kernels.linux_5_10 { };
     linux_5_15_hardened = hardenedKernelFor kernels.linux_5_15 { };
     linux_6_1_hardened = hardenedKernelFor kernels.linux_6_1 { };
@@ -363,10 +367,7 @@ in {
 
     intel-speed-select = if lib.versionAtLeast kernel.version "5.3" then callPackage ../os-specific/linux/intel-speed-select { } else null;
 
-    ipu6-drivers =
-      if kernelOlder "6.10"
-      then callPackage ../os-specific/linux/ipu6-drivers {}
-      else null;
+    ipu6-drivers = callPackage ../os-specific/linux/ipu6-drivers {};
 
     ivsc-driver = callPackage ../os-specific/linux/ivsc-driver {};
 
@@ -597,6 +598,8 @@ in {
     drbd = callPackage ../os-specific/linux/drbd/driver.nix { };
 
     nullfs = callPackage ../os-specific/linux/nullfs { };
+
+    msi-ec = callPackage ../os-specific/linux/msi-ec { };
 
   } // lib.optionalAttrs config.allowAliases {
     ati_drivers_x11 = throw "ati drivers are no longer supported by any kernel >=4.1"; # added 2021-05-18;

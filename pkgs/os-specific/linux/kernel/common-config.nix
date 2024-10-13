@@ -11,6 +11,7 @@
 
 # Configuration
 { lib, stdenv, version
+, rustAvailable
 
 , features ? {}
 }:
@@ -28,6 +29,18 @@ let
           stdenv.hostPlatform.isx86_64 ||
           (stdenv.hostPlatform.isPower && stdenv.hostPlatform.is64bit) ||
           (stdenv.hostPlatform.isMips && stdenv.hostPlatform.is64bit));
+
+  forceRust = features.rust or false;
+  kernelSupportsRust = lib.versionAtLeast version "6.7";
+
+  # Currently only enabling Rust by default on kernel 6.12+,
+  # which actually has features that use Rust that we want.
+  defaultRust = lib.versionAtLeast version "6.12" && rustAvailable;
+  withRust =
+    assert lib.assertMsg (!(forceRust && !kernelSupportsRust)) ''
+      Kernels below 6.7 (the kernel being built is ${version}) don't support Rust.
+    '';
+    (forceRust || defaultRust) && kernelSupportsRust;
 
   options = {
 
@@ -134,6 +147,7 @@ let
 
       # Required to bring up some Bay Trail devices properly
       I2C                              = yes;
+      I2C_DESIGNWARE_CORE              = yes;
       I2C_DESIGNWARE_PLATFORM          = yes;
       PMIC_OPREGION                    = whenAtLeast "5.10" yes;
       INTEL_SOC_PMIC                   = whenAtLeast "5.10" yes;
@@ -182,7 +196,7 @@ let
 
       # Collect ECC errors and retire pages that fail too often
       RAS_CEC                   = yes;
-    } // lib.optionalAttrs (stdenv.is32bit) {
+    } // lib.optionalAttrs (stdenv.hostPlatform.is32bit) {
       # Enable access to the full memory range (aka PAE) on 32-bit architectures
       # This check isn't super accurate but it's close enough
       HIGHMEM                   = option yes;
@@ -214,7 +228,7 @@ let
     timer = {
       # Enable Full Dynticks System.
       # NO_HZ_FULL depends on HAVE_VIRT_CPU_ACCOUNTING_GEN depends on 64BIT
-      NO_HZ_FULL = lib.mkIf stdenv.is64bit yes;
+      NO_HZ_FULL = lib.mkIf stdenv.hostPlatform.is64bit yes;
     };
 
     # Enable NUMA.
@@ -411,7 +425,7 @@ let
     };
 
     video = let
-      whenHasDevicePrivate = lib.mkIf (!stdenv.isx86_32);
+      whenHasDevicePrivate = lib.mkIf (!stdenv.hostPlatform.isx86_32);
     in {
       # compile in DRM so simpledrm can load before initrd if necessary
       AGP = yes;
@@ -484,14 +498,16 @@ let
       DRM_VC4_HDMI_CEC = yes;
     };
 
-    # Enables Rust support in the Linux kernel. This is currently not enabled by default, because it occasionally requires
-    # patching the Linux kernel for the specific Rust toolchain in nixpkgs. These patches usually take a bit
-    # of time to appear and this would hold up Linux kernel and Rust toolchain updates.
-    #
-    # Once Rust in the kernel has more users, we can reconsider enabling it by default.
-    rust = lib.optionalAttrs ((features.rust or false) && lib.versionAtLeast version "6.7") {
+    # Enable Rust and features that depend on it
+    rust = lib.optionalAttrs withRust {
       RUST = yes;
-      GCC_PLUGINS = no;
+
+      # These don't technically require Rust but we probably want to get some more testing
+      # on the whole DRM panic setup before shipping it by default.
+      DRM_PANIC = whenAtLeast "6.12" yes;
+      DRM_PANIC_SCREEN = whenAtLeast "6.12" (freeform "kmsg");
+
+      DRM_PANIC_SCREEN_QR_CODE = whenAtLeast "6.12" yes;
     };
 
     sound = {
@@ -552,7 +568,7 @@ let
 
       USB_EHCI_ROOT_HUB_TT = yes; # Root Hub Transaction Translators
       USB_EHCI_TT_NEWSCHED = yes; # Improved transaction translator scheduling
-      USB_HIDDEV = yes; # USB Raw HID Devices (like monitor controls and Uninterruptable Power Supplies)
+      USB_HIDDEV = yes; # USB Raw HID Devices (like monitor controls and Uninterruptable Power Supplies)
 
       # default to dual role mode
       USB_DWC2_DUAL_ROLE = yes;
@@ -628,6 +644,10 @@ let
       NFS_V4_1              = yes;  # NFSv4.1 client support
       NFS_V4_2              = yes;
       NFS_V4_SECURITY_LABEL = yes;
+
+      # Fails with
+      # `fs/nfs/localio.o: relocation R_AARCH64_ADR_PREL_PG_HI21 against symbol `nfs_to' which may bind externally can not be used when making a shared object; recompile with -fPIC`
+      NFS_LOCALIO           = lib.mkIf (!stdenv.hostPlatform.isAarch64) (whenAtLeast "6.12" yes);
 
       CIFS_XATTR        = yes;
       CIFS_POSIX        = option yes;
@@ -836,9 +856,9 @@ let
       KSM = yes;
       VIRT_DRIVERS = yes;
       # We need 64 GB (PAE) support for Xen guest support
-      HIGHMEM64G = { optional = true; tristate = lib.mkIf (!stdenv.is64bit) "y";};
+      HIGHMEM64G = { optional = true; tristate = lib.mkIf (!stdenv.hostPlatform.is64bit) "y";};
 
-      VFIO_PCI_VGA = lib.mkIf stdenv.is64bit yes;
+      VFIO_PCI_VGA = lib.mkIf stdenv.hostPlatform.is64bit yes;
 
       UDMABUF = yes;
 
@@ -895,6 +915,12 @@ let
       ZRAM                          = module;
       ZRAM_WRITEBACK                = option yes;
       ZRAM_MULTI_COMP               = whenAtLeast "6.2" yes;
+      ZRAM_BACKEND_842              = whenAtLeast "6.12" yes;
+      ZRAM_BACKEND_DEFLATE          = whenAtLeast "6.12" yes;
+      ZRAM_BACKEND_LZ4              = whenAtLeast "6.12" yes;
+      ZRAM_BACKEND_LZ4HC            = whenAtLeast "6.12" yes;
+      ZRAM_BACKEND_LZO              = whenAtLeast "6.12" yes;
+      ZRAM_BACKEND_ZSTD             = whenAtLeast "6.12" yes;
       ZRAM_DEF_COMP_ZSTD            = whenAtLeast "5.11" yes;
       ZSWAP                         = option yes;
       ZSWAP_COMPRESSOR_DEFAULT_ZSTD = whenAtLeast "5.7" (lib.mkOptionDefault yes);
@@ -940,7 +966,7 @@ let
 
       # Allows soft-dirty tracking on pages, used by CRIU.
       # See https://docs.kernel.org/admin-guide/mm/soft-dirty.html
-      MEM_SOFT_DIRTY = lib.mkIf (!stdenv.isx86_32) yes;
+      MEM_SOFT_DIRTY = lib.mkIf (!stdenv.hostPlatform.isx86_32) yes;
     };
 
     misc = let
@@ -973,7 +999,11 @@ let
       THRUSTMASTER_FF    = yes;
       ZEROPLUS_FF        = yes;
 
-      MODULE_COMPRESS      = whenOlder "5.13" yes;
+      MODULE_COMPRESS      = lib.mkMerge [
+        (whenOlder "5.13" yes)
+        (whenAtLeast "6.12" yes)
+      ];
+      MODULE_COMPRESS_ALL  = whenAtLeast "6.12" yes;
       MODULE_COMPRESS_XZ   = yes;
 
       SYSVIPC            = yes;  # System-V IPC
@@ -1179,6 +1209,7 @@ let
       LIRC = yes;
 
       SCHED_CORE = whenAtLeast "5.14" yes;
+      SCHED_CLASS_EXT = whenAtLeast "6.12" yes;
 
       LRU_GEN = whenAtLeast "6.1"  yes;
       LRU_GEN_ENABLED =  whenAtLeast "6.1" yes;

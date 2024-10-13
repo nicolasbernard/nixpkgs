@@ -322,6 +322,7 @@ in {
   fancontrol = handleTest ./fancontrol.nix {};
   fanout = handleTest ./fanout.nix {};
   fcitx5 = handleTest ./fcitx5 {};
+  fedimintd = runTest ./fedimintd.nix;
   fenics = handleTest ./fenics.nix {};
   ferm = handleTest ./ferm.nix {};
   ferretdb = handleTest ./ferretdb.nix {};
@@ -367,6 +368,7 @@ in {
   mimir = handleTest ./mimir.nix {};
   gancio = handleTest ./gancio.nix {};
   garage = handleTest ./garage {};
+  gatus = runTest ./gatus.nix;
   gemstash = handleTest ./gemstash.nix {};
   geoserver = runTest ./geoserver.nix;
   gerrit = handleTest ./gerrit.nix {};
@@ -455,6 +457,7 @@ in {
   icingaweb2 = handleTest ./icingaweb2.nix {};
   ifm = handleTest ./ifm.nix {};
   iftop = handleTest ./iftop.nix {};
+  immich = handleTest ./web-apps/immich.nix {};
   incron = handleTest ./incron.nix {};
   incus = pkgs.recurseIntoAttrs (handleTest ./incus { inherit handleTestOn; inherit (pkgs) incus; });
   incus-lts = pkgs.recurseIntoAttrs (handleTest ./incus { inherit handleTestOn; });
@@ -657,6 +660,7 @@ in {
   # TODO: put in networking.nix after the test becomes more complete
   networkingProxy = handleTest ./networking-proxy.nix {};
   nextcloud = handleTest ./nextcloud {};
+  nextflow = handleTestOn ["x86_64-linux"] ./nextflow.nix {};
   nextjs-ollama-llm-ui = runTest ./web-apps/nextjs-ollama-llm-ui.nix;
   nexus = handleTest ./nexus.nix {};
   # TODO: Test nfsv3 + Kerberos
@@ -669,6 +673,7 @@ in {
   nginx-etag-compression = handleTest ./nginx-etag-compression.nix {};
   nginx-globalredirect = handleTest ./nginx-globalredirect.nix {};
   nginx-http3 = handleTest ./nginx-http3.nix {};
+  nginx-mime = handleTest ./nginx-mime.nix {};
   nginx-modsecurity = handleTest ./nginx-modsecurity.nix {};
   nginx-moreheaders = handleTest ./nginx-moreheaders.nix {};
   nginx-njs = handleTest ./nginx-njs.nix {};
@@ -715,6 +720,7 @@ in {
   nzbhydra2 = handleTest ./nzbhydra2.nix {};
   ocis = handleTest ./ocis.nix {};
   oddjobd = handleTestOn [ "x86_64-linux" "aarch64-linux" ] ./oddjobd.nix {};
+  obs-studio = handleTest ./obs-studio.nix {};
   oh-my-zsh = handleTest ./oh-my-zsh.nix {};
   ollama = runTest ./ollama.nix;
   ollama-cuda = runTestOn ["x86_64-linux" "aarch64-linux"] ./ollama-cuda.nix;
@@ -739,6 +745,7 @@ in {
   image-contents = handleTest ./image-contents.nix {};
   openvscode-server = handleTest ./openvscode-server.nix {};
   open-webui = runTest ./open-webui.nix;
+  openvswitch = runTest ./openvswitch.nix;
   orangefs = handleTest ./orangefs.nix {};
   os-prober = handleTestOn ["x86_64-linux"] ./os-prober.nix {};
   osquery = handleTestOn ["x86_64-linux"] ./osquery.nix {};
@@ -818,6 +825,7 @@ in {
   printing-socket = handleTest ./printing.nix { socket = true; };
   printing-service = handleTest ./printing.nix { socket = false; };
   private-gpt = handleTest ./private-gpt.nix {};
+  privatebin = runTest ./privatebin.nix;
   privoxy = handleTest ./privoxy.nix {};
   prometheus = handleTest ./prometheus {};
   prometheus-exporters = handleTest ./prometheus-exporters.nix {};
@@ -856,6 +864,7 @@ in {
   redlib = handleTest ./redlib.nix {};
   redmine = handleTest ./redmine.nix {};
   renovate = handleTest ./renovate.nix {};
+  replace-dependencies = handleTest ./replace-dependencies {};
   restartByActivationScript = handleTest ./restart-by-activation-script.nix {};
   restic-rest-server = handleTest ./restic-rest-server.nix {};
   restic = handleTest ./restic.nix {};
@@ -868,6 +877,7 @@ in {
   rshim = handleTest ./rshim.nix {};
   rspamd = handleTest ./rspamd.nix {};
   rspamd-trainer = handleTest ./rspamd-trainer.nix {};
+  rss-bridge = handleTest ./web-apps/rss-bridge.nix {};
   rss2email = handleTest ./rss2email.nix {};
   rstudio-server = handleTest ./rstudio-server.nix {};
   rsyncd = handleTest ./rsyncd.nix {};
@@ -934,6 +944,7 @@ in {
   sudo = handleTest ./sudo.nix {};
   sudo-rs = handleTest ./sudo-rs.nix {};
   sunshine = handleTest ./sunshine.nix {};
+  suricata = handleTest ./suricata.nix {};
   suwayomi-server = handleTest ./suwayomi-server.nix {};
   swap-file-btrfs = handleTest ./swap-file-btrfs.nix {};
   swap-partition = handleTest ./swap-partition.nix {};
@@ -1059,6 +1070,7 @@ in {
   unbound = handleTest ./unbound.nix {};
   unifi = handleTest ./unifi.nix {};
   unit-php = handleTest ./web-servers/unit-php.nix {};
+  unit-perl = handleTest ./web-servers/unit-perl.nix {};
   upnp.iptables = handleTest ./upnp.nix { useNftables = false; };
   upnp.nftables = handleTest ./upnp.nix { useNftables = true; };
   uptermd = handleTest ./uptermd.nix {};

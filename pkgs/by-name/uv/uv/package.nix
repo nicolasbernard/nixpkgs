@@ -9,21 +9,20 @@
   python3Packages,
   rustPlatform,
   stdenv,
-  testers,
-  uv,
+  versionCheckHook,
   nix-update-script,
 }:
 
 python3Packages.buildPythonApplication rec {
   pname = "uv";
-  version = "0.4.11";
+  version = "0.4.20";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "astral-sh";
     repo = "uv";
     rev = "refs/tags/${version}";
-    hash = "sha256-a8mN2wag26BSL+2b5i4P1XN34J8jt+lZm2poZQdsAzM=";
+    hash = "sha256-PfjYGCPPRZVm4H9oxkWdjW7kHu4CqdkenFgL61dOU5k=";
   };
 
   cargoDeps = rustPlatform.importCargoLock {
@@ -46,7 +45,7 @@ python3Packages.buildPythonApplication rec {
 
   buildInputs = [
     libiconv
-  ] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.SystemConfiguration ];
+  ] ++ lib.optionals stdenv.hostPlatform.isDarwin [ darwin.apple_sdk.frameworks.SystemConfiguration ];
 
   dontUseCmakeConfigure = true;
 
@@ -65,8 +64,12 @@ python3Packages.buildPythonApplication rec {
 
   pythonImportsCheck = [ "uv" ];
 
+  nativeCheckInputs = [
+    versionCheckHook
+  ];
+  versionCheckProgramArg = [ "--version" ];
+
   passthru = {
-    tests.version = testers.testVersion { package = uv; };
     updateScript = nix-update-script { };
   };
 
